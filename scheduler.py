@@ -226,4 +226,22 @@ def determine_is_alive(operations, tasks, fol):
     return True, -1, False
 
 
+def schedule(task, worker_id):
+    fol = worker_id.get_my_fol()
+
+    input_name = "Input%08i"%task.idno
+
+    open_atomic(input_name)
+    f.write("%s\n"%task.executable)
+    for inputt in task.inputs:
+        f.write("%s\n"%inputt)
+    close_atomic(f, input_name)
+
+
+
+
+
+
+
+
 
