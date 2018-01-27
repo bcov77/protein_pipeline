@@ -42,7 +42,7 @@ def schedule_tasks_to_workers(operations, tasks):
     delete_single_ids = []
     for allocation_id in grouped:
         example = grouped[allocation_id][0]
-        print example.allocation_cpus, len(grouped[allocation_id])
+        # print example.allocation_cpus, len(grouped[allocation_id])
         if (example.allocation_cpus == len(grouped[allocation_id])):
             grouped_singles.append(grouped[allocation_id])
             delete_single_ids.append(allocation_id)
@@ -102,7 +102,7 @@ def try_to_schedule(to_run, single_cpus, grouped_singles, multi_cpus):
             if (multi_cpu_next == len(multi_cpus)):
                 if (grouped_single_next == len(grouped_singles)):
                     break  # we may not be out be we can't do much else
-                multi_cpus += combine_worker(grouped_singles[grouped_single_next])
+                multi_cpus.append(combine_worker(grouped_singles[grouped_single_next]))
                 grouped_single_next += 1
 
             assert(multi_cpu_next != len(multi_cpus))
@@ -170,7 +170,7 @@ def find_ready_workers_and_running_tasks(operations, tasks):
 
     for fol in worker_fols:
         alive, running_taskno, waiting = determine_is_alive(operations, tasks, fol)
-        print "%s is alive %r and waiting %r"%(fol, alive, waiting)
+        # print "%s is alive %r and waiting %r"%(fol, alive, waiting)
         if (not alive):
             continue
         if (running_taskno >= 0):
@@ -210,9 +210,9 @@ def determine_is_alive(operations, tasks, fol):
 
     #next look for running
     for file in files:
-        if (re.match("IAccept[0-9]+", file) != None):
+        if (re.match("IAccept[0-9]+$", file) != None):
             age = age_of_file_minutes(os.path.join(fol, file))
-            taskno = int(re.match("IAccept([0-9]+)", file).group(1))
+            taskno = int(re.match("IAccept([0-9]+)$", file).group(1))
             task_length = tasks[taskno].operation.max_minutes
 
             if (age < task_length + dead_extra_mins):
@@ -221,9 +221,9 @@ def determine_is_alive(operations, tasks, fol):
 
     #next look for recent input assignment
     for file in files:
-        if (re.match("Inputs[0-9]+", file) != None):
+        if (re.match("Inputs[0-9]+$", file) != None):
             age = age_of_file_minutes(os.path.join(fol, file))
-            taskno = int(re.match("Inputs([0-9]+)", file).group(1))
+            taskno = int(re.match("Inputs([0-9]+)$", file).group(1))
 
             if (age < dead_extra_mins):
                 return True, taskno, False

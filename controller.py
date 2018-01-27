@@ -90,7 +90,7 @@ def controller_loop():
         print "Completed tasks: %i"%len(known_completed_tasks)
 
 
-        time.sleep(10)
+        time.sleep(15)
 
 def create_new_tasks_if_possible(operations, tasks, inputs_lists):
 
@@ -255,7 +255,7 @@ def parse_completed_tasks(operations, tasks, known_input_files):
     read_files = []
 
     for worker_fol in worker_fols:
-        print worker_fol
+        # print worker_fol
         completeds = glob.glob(os.path.join(worker_fol, "ICompleted*.list"))
         this_final_inputs = []
         for complete in completeds:

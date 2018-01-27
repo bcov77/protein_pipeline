@@ -36,7 +36,6 @@ class WorkerId:
         self.my_cpus = js["my_cpus"]
 
     def to_string(self):
-        print self.allocation_cpus, "!!@!$@#$@#$@"
         dictt = {
             "allocation_id":self.allocation_id,
             "allocation_cpus":self.allocation_cpus,
@@ -50,7 +49,7 @@ class WorkerId:
         return os.path.join(workers_fol, self.my_id)
 
     def get_allocation_fol(self):
-        return os.path.join(workers_fol, self.my_id)
+        return os.path.join(workers_fol, self.allocation_id)
 
     def make_my_fol(self):
         fol = self.get_my_fol()
@@ -102,10 +101,9 @@ def split_worker(worker_id):
 
 
 def combine_worker(worker_ids):
-    my_fol = worker_id.get_my_fol()
 
     allocation_id = worker_ids[0].allocation_id
-    allocation_fol = worker_ids[0].get_allocation_fol
+    allocation_fol = worker_ids[0].get_allocation_fol()
 
     print "Combining workers: %s"%allocation_id
 
@@ -121,10 +119,10 @@ def combine_worker(worker_ids):
     for worker_id in worker_ids:
         kill_worker(worker_id)
 
-    new_id = WorkerId(allocation_id, worker_ids[0].allocation_cpus)
+    new_id = WorkerId(allocation_id + "__", worker_ids[0].allocation_cpus)
     new_id.make_my_fol()
 
-
+    return new_id
 
 
 

@@ -32,7 +32,7 @@ def worker_loop(worker_id):
             worker_death_handler(worker_id, files)
 
         for file in files:
-            if (re.match("Inputs[0-9]+", file) != None):
+            if (re.match("Inputs[0-9]+$", file) != None):
                 worker_run_job(worker_id, file)
 
 
@@ -49,7 +49,11 @@ def worker_death_handler(worker_id, files):
     if ("ISplit" in files):
         worker_split_handler(worker_id)
 
+    time.sleep(15)
     # This would get called when the original worker revives
+    my_fol = worker_id.get_my_fol()
+    files = list_files_new_to_old(my_fol)
+
     if ("IMerged" in files):
         worker_merge_handler(worker_id)
 
@@ -58,7 +62,7 @@ def worker_death_handler(worker_id, files):
 
 
 def worker_run_job(worker_id, file):
-    taskno = int(re.match("Inputs([0-9]+)", file).group(1))
+    taskno = int(re.match("Inputs([0-9]+)$", file).group(1))
 
     my_fol = worker_id.get_my_fol()
 
@@ -107,7 +111,7 @@ def worker_split_handler(worker_id):
 
     print "Splitting into individual threads"
 
-    print cmd("cat %s | parallel '%s %s %i {} > _{}.log'"%(isplit, worker_executable,
+    print cmd("cat %s | parallel '%s %s %i {} '"%(isplit, worker_executable,
         worker_id.allocation_id, worker_id.allocation_cpus))
 
 
@@ -137,11 +141,13 @@ if __name__ == "__main__":
     if (len(sys.argv) > 3):
         extras = sys.argv[3]
     
+
+    my_id = WorkerId(allocation_id, threads, extras)
+
     new_worker = True
     while (new_worker):
         new_worker = False
 
-        my_id = WorkerId(allocation_id, threads, extras)
         new_worker_setup(my_id)
 
         try:
