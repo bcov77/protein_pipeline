@@ -79,6 +79,7 @@ def controller_loop():
         print "Completed tasks: %i"%len(known_completed_tasks)
 
 
+        time.sleep(10)
 
 def create_new_tasks_if_possible(operations, tasks, inputs_lists):
 
