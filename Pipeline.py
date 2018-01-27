@@ -17,7 +17,6 @@ class Operation:
     batch_size = 0
     executable = ""
     cpu_size = 0
-    mem_size = 0
     max_minutes = 0
     idno = 0
 
@@ -50,8 +49,6 @@ class Operation:
                 executable = arg
             if (key == "cpurequest"):
                 cpu_size = int(arg)
-            if (key == "memrequest"):
-                mem_size = int(arg)
             if (key == "maxminutes"):
                 max_minutes = int(arg)
 
@@ -63,7 +60,6 @@ class Operation:
         assert(batch_size > 0)
         assert(os.path.exists(executable))
         assert(cpu_size > 0)
-        assert(mem_size > 0)
         assert(max_minutes > 0)
 
 

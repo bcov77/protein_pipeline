@@ -13,6 +13,7 @@ do
     fi
 
     a=$(printf $var; printf "_")
+    touch $a
     output=$(echo "$output"; printf "$a"; printf "\n" )
 
 

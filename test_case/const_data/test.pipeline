@@ -1,0 +1,21 @@
+
+
+op2:
+    BatchSize: 30
+    Executable: test_programs/op2_multi.sh
+    CpuRequest: 1
+    MaxMinutes: 1
+
+
+op1:
+    BatchSize: 1
+    Executable: test_programs/op1.sh
+    CpuRequest: 100
+    MaxMinutes: 1
+
+op3:
+    BatchSize: 1
+    Executable: test_programs/op1.sh
+    CpuRequest: 1
+    MaxMinutes: 1
+    
