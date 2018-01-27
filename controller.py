@@ -23,62 +23,62 @@ def controller_loop():
         os.mkdir(workers_fol)
 
 
+    while (True):
+
+        current_tasks = parse_task_list(pipeline)
+
+        # Merge output of tasks into Completed.list. Includes initial_inputs
+        process_completed(pipeline, current_tasks)
+
+        # Split inputs into command groups
+        input_lists = determine_inputs(pipeline, current_tasks)
+
+        # Find inputs that are currently being processed
+        task_input_lists = get_inputs_for_tasks(pipeline, current_tasks)
+
+        inputs_to_run_lists = []
+        for i in range(len(pipeline)):
+            dictt = {}
+            for item in input_lists[i]:
+                if item in dictt:
+                    print "Duplicate input: %i %s"%(i, item)
+                dictt[item] = True
+
+            for item in task_input_lists[i]:
+                if item not in dictt:
+                    print "Missing input: %i %s"%(i, item)
+                else:
+                    dictt[item] = False
 
 
-    current_tasks = parse_task_list(pipeline)
-
-    # Merge output of tasks into Completed.list. Includes initial_inputs
-    process_completed(pipeline, current_tasks)
-
-    # Split inputs into command groups
-    input_lists = determine_inputs(pipeline, current_tasks)
-
-    # Find inputs that are currently being processed
-    task_input_lists = get_inputs_for_tasks(pipeline, current_tasks)
-
-    inputs_to_run_lists = []
-    for i in range(len(pipeline)):
-        dictt = {}
-        for item in input_lists[i]:
-            if item in dictt:
-                print "Duplicate input: %i %s"%(i, item)
-            dictt[item] = True
-
-        for item in task_input_lists[i]:
-            if item not in dictt:
-                print "Missing input: %i %s"%(i, item)
-            else:
-                dictt[item] = False
+            these_ones = []
+            for key in dictt:
+                if (dictt[key]):
+                    these_ones.append(key)
+            inputs_to_run_lists.append(these_ones)
 
 
-        these_ones = []
-        for key in dictt:
-            if (dictt[key]):
-                these_ones.append(key)
-        inputs_to_run_lists.append(these_ones)
+        for i in range(len(pipeline)):
+            print "Stage %03i: tasked: %6i waiting: %6i"%(i, len(task_input_lists[i]), len(inputs_to_run_lists[i]))
 
 
-    for i in range(len(pipeline)):
-        print "Stage %03i: tasked: %6i waiting: %6i"%(i, len(task_input_lists[i]), len(inputs_to_run_lists[i]))
+        # Create new tasks to run
+        create_new_tasks_if_possible(pipeline, current_tasks, inputs_to_run_lists)
+
+        # Cache current tasks
+        write_task_list(pipeline, current_tasks)
+        current_tasks = parse_task_list(pipeline)
+
+        running_tasknos, new_single_tasknos = schedule_tasks_to_workers(operations, current_tasks)
+
+        known_completed_tasks, known_input_files = parse_completed_list(operations, tasks)
+
+        print "Total tasks: %i"%len(current_tasks)
+        print "Prev running tasks: %i"%(len(running_tasknos))
+        print "New running tasks: %i"%(len(new_single_tasknos))
+        print "Completed tasks: %i"%len(known_completed_tasks)
 
 
-    # Create new tasks to run
-    create_new_tasks_if_possible(pipeline, current_tasks, inputs_to_run_lists)
-
-    # Cache current tasks
-    write_task_list(pipeline, current_tasks)
-    current_tasks = parse_task_list(pipeline)
-
-    running_tasknos, new_single_tasknos = schedule_tasks_to_workers(operations, current_tasks)
-
-    known_completed_tasks, known_input_files = parse_completed_list(operations, tasks)
-
-    print "Total tasks: %i"%len(current_tasks)
-    print "Prev running tasks: %i"%(len(running_tasknos))
-    print "New running tasks: %i"%(len(new_single_tasknos))
-    print "Completed tasks: %i"%len(known_completed_tasks)
-
-    
 
 def create_new_tasks_if_possible(operations, tasks, inputs_lists):
 
@@ -344,6 +344,5 @@ def try_become_controller(id):
 if __name__ == "__main__":
     allocation_id = sys.argv[1]
     threads = int(sys.argv[2])
-    gigs = int(sys.argv[3])
-    my_id = WorkerId(allocation_id, threads, gigs)
+    my_id = WorkerId(allocation_id, threads)
     try_become_controller(my_id)

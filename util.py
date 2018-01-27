@@ -4,6 +4,7 @@ import os
 import sys
 import glob
 import time
+import subprocess
 
 
 
@@ -37,6 +38,9 @@ def cmd(command, wait=True):
 def age_of_file_minutes(filename):
     return (time.time() - os.path.getmtime(filename)) / 60
 
+def list_files_new_to_old(folder):
+    return cmd("ls -t %s"%my_fol).strip().split()
 
-
+def get_script_dir():
+    return os.path.dirname(os.path.realpath(sys.argv[0]))
 

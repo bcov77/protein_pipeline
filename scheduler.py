@@ -163,11 +163,14 @@ def find_ready_workers_and_running_tasks(operations, tasks):
     running_tasknos = []
 
     for fol in worker_fols:
-        alive, running_taskno = determine_is_alive(fol)
+        alive, running_taskno, waiting = determine_is_alive(fol)
         if (not alive):
             continue
         if (running_taskno >= 0):
             running_tasknos.append(running_taskno)
+
+        if (not waiting):
+            continue
 
         f = open(os.path.join(fol, "info"))
         worker_id = WorkerId(f.read())
@@ -180,9 +183,9 @@ def find_ready_workers_and_running_tasks(operations, tasks):
 
 
 
-
+# alive, running task no, waiting
 def determine_is_alive(operations, tasks, fol):
-    files = cmd("ls -t %s"%fol).strip().split()
+    files = list_files_new_to_old(fol)
 
     #first look for known dead
     for file in files:
@@ -194,7 +197,7 @@ def determine_is_alive(operations, tasks, fol):
         if (file == "IWaiting"):
             age = age_of_file_minutes(os.path.join(fol, file))
             if (age < dead_extra_mins):
-                return True, -1
+                return True, -1, True
             break
 
     #next look for running
@@ -205,7 +208,7 @@ def determine_is_alive(operations, tasks, fol):
             task_length = tasks[taskno].operation.max_minutes
 
             if (age < task_length + dead_extra_mins):
-                return True, taskno
+                return True, taskno, False
             break
 
     #next look for recent input assignment
@@ -215,12 +218,12 @@ def determine_is_alive(operations, tasks, fol):
             taskno = int(re.match("Inputs([0-9]+)", file).group(1))
 
             if (age < dead_extra_mins):
-                return True, taskno
+                return True, taskno, False
             break
 
     print "Not sure if dead or alive: %s: %s"%(fol, " ".join(files))
 
-    return True, -1
+    return True, -1, False
 
 
 
