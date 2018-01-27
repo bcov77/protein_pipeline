@@ -35,10 +35,10 @@ class WorkerId:
 
     def to_string(self):
         dictt = {
-            "allocation_id":self.allocation_id
-            "allocation_cpus":self.allocation_cpus
+            "allocation_id":self.allocation_id,
+            "allocation_cpus":self.allocation_cpus,
 
-            "my_id":self.my_id
+            "my_id":self.my_id,
             "my_cpus":self.my_cpus
         }
         return json.dumps(dictt)

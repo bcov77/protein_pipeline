@@ -4,6 +4,13 @@ import os
 import sys
 import glob
 
+import scheduler
+import Pipeline
+import Task
+import util
+import worker
+import WorkerId
+
 const_data_fol = "const_data"
 workers_fol = "workers"
 
@@ -17,7 +24,7 @@ def controller_loop():
     pipeline_file = glob.glob(os.path.join(const_data_fol, "*.pipeline"))
     assert(len(pipeline_file) == 1)
 
-    pipeline = Pipeline(pipeline_file)
+    pipeline = Pipeline(pipeline_file).operations
 
     if (not os.path.exists(workers_fol)):
         os.mkdir(workers_fol)
@@ -235,7 +242,7 @@ def parse_completed_tasks(operations, tasks):
         completeds = glob.glob(os.path.join(worker_fol, "ICompleted*.list"))
         this_final_inputs = []
         for complete in completeds:
-            f = open(complete):
+            f = open(complete)
             lines = f.readlines()
             f.close()
             for line in lines:
@@ -336,7 +343,7 @@ def parse_task_list(operations):
 
 
 def try_become_controller(id):
-
+    controller_loop()
 
 
 
@@ -347,3 +354,8 @@ if __name__ == "__main__":
     threads = int(sys.argv[2])
     my_id = WorkerId(allocation_id, threads)
     try_become_controller(my_id)
+
+
+
+
+

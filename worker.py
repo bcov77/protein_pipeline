@@ -99,7 +99,7 @@ class MergeException(Exception):
 
 def worker_merge_handler(worker_id):
     print "Individual threads merge into one"
-    except MergeException()
+    raise MergeException()
 
 
 
