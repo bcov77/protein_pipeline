@@ -23,11 +23,10 @@ class Operation:
     initial_operation = False
 
 
-    def __init__(self):
-        pass
 
-
-    def __init__(self, lines, ordinal):
+    def __init__(self, lines="", ordinal=0):
+        if (lines == ""):
+            return
         self.parse_lines(lines, ordinal)
         self.sanity_check()
 

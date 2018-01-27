@@ -8,7 +8,7 @@ from collections import defaultdict
 from controller import *
 
 
-dead_extra_mins = 10
+dead_extra_mins = 1
 
 
 #order tasks from furthest in pipeline to least
@@ -41,10 +41,12 @@ def schedule_tasks_to_workers(operations, tasks):
 
     delete_single_ids = []
     for allocation_id in grouped:
-        example = grouped[allocatin_id][0]
+        example = grouped[allocation_id][0]
+        print example.allocation_cpus, len(grouped[allocation_id])
         if (example.allocation_cpus == len(grouped[allocation_id])):
             grouped_singles.append(grouped[allocation_id])
             delete_single_ids.append(allocation_id)
+            print "here"
 
     temp_single_cpus = single_cpus
     single_cpus = []
@@ -53,7 +55,7 @@ def schedule_tasks_to_workers(operations, tasks):
             continue
         single_cpus.append(single_cpu)
 
-    single_cpus = sorted(single_cpus, lambda x: len(grouped[x.allocation_id]))
+    single_cpus = sorted(single_cpus, key=lambda x: len(grouped[x.allocation_id]))
 
     new_running_tasknos = try_to_schedule(to_run, single_cpus, grouped_singles, multi_cpus)
 
@@ -72,6 +74,8 @@ def try_to_schedule(to_run, single_cpus, grouped_singles, multi_cpus):
     grouped_single_next = 0
     multi_cpu_next = 0
     to_run_next = 0
+
+    print "Have: %i singles %i groups %i multi"%(len(single_cpus), len(grouped_singles), len(multi_cpus))
 
     new_running_tasknos = []
 
@@ -128,7 +132,7 @@ def try_to_schedule(to_run, single_cpus, grouped_singles, multi_cpus):
 
 
 
-# higher command.idno gets priority to make the pipeline flow
+# higher operation.idno gets priority to make the pipeline flow
 def order_waiting_tasks_by_priority(operations, tasks, running_tasknos):
 
     known_completed_tasks, known_input_files = parse_completed_list(operations, tasks)
@@ -152,20 +156,21 @@ def order_waiting_tasks_by_priority(operations, tasks, running_tasknos):
         if (task_should_run[taskno]):
             to_run.append(tasks[taskno])
 
-    to_run = sorted(to_run, key=lambda x : -x.command.idno)
+    to_run = sorted(to_run, key=lambda x : -x.operation.idno)
 
     return to_run
 
 
 
 def find_ready_workers_and_running_tasks(operations, tasks):
-    worker_fols = glob.glob(os.path.join("workers_fol", "*/"))
+    worker_fols = glob.glob(os.path.join(workers_fol, "*/"))
 
     ready_workers = []
     running_tasknos = []
 
     for fol in worker_fols:
-        alive, running_taskno, waiting = determine_is_alive(fol)
+        alive, running_taskno, waiting = determine_is_alive(operations, tasks, fol)
+        print "%s is alive %r and waiting %r"%(fol, alive, waiting)
         if (not alive):
             continue
         if (running_taskno >= 0):
@@ -175,12 +180,13 @@ def find_ready_workers_and_running_tasks(operations, tasks):
             continue
 
         f = open(os.path.join(fol, "info"))
-        worker_id = WorkerId(f.read())
+        worker_id = worker_id_from_string(f.read())
         f.close()
 
         ready_workers.append(worker_id)
         
 
+    print "Found %i ready workers"%(len(ready_workers))
     return ready_workers, running_tasknos
 
 
@@ -192,7 +198,7 @@ def determine_is_alive(operations, tasks, fol):
     #first look for known dead
     for file in files:
         if (file == "IDead"):
-            return False, -1
+            return False, -1, False
 
     #next look for waiting
     for file in files:
@@ -223,18 +229,22 @@ def determine_is_alive(operations, tasks, fol):
                 return True, taskno, False
             break
 
-    print "Not sure if dead or alive: %s: %s"%(fol, " ".join(files))
+    print "Worker seems dead: %s: %s"%(fol, " ".join(files))
+    print "Killing worker: %s"%fol
+    cmd("echo a > %s"%os.path.join(fol, "IDead"))
 
-    return True, -1, False
+    return False, -1, False
 
 
 def schedule(task, worker_id):
     fol = worker_id.get_my_fol()
 
-    input_name = "Input%08i"%task.idno
+    print "Scheduling task %08i to %s"%(task.idno, worker_id.my_id)
 
-    open_atomic(input_name)
-    f.write("%s\n"%task.executable)
+    input_name = os.path.join(fol, "Inputs%08i"%task.idno)
+
+    f = open_atomic(input_name)
+    f.write("%s\n"%task.operation.executable)
     for inputt in task.inputs:
         f.write("%s\n"%inputt)
     close_atomic(f, input_name)

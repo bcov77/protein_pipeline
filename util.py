@@ -24,7 +24,7 @@ def check_failed_atomic(filename):
     return os.path.exists(make_temp_filename(filename))
 
 def mark_done(filename):
-    os.path.rename(filename, filename + ".done")
+    os.rename(filename, filename + ".done")
 
 def cmd(command, wait=True):
     # print ""
@@ -39,7 +39,7 @@ def age_of_file_minutes(filename):
     return (time.time() - os.path.getmtime(filename)) / 60
 
 def list_files_new_to_old(folder):
-    return cmd("ls -t %s"%my_fol).strip().split()
+    return cmd("ls -t %s"%folder).strip().split()
 
 def get_script_dir():
     return os.path.dirname(os.path.realpath(sys.argv[0]))

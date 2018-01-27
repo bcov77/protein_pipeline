@@ -4,6 +4,12 @@ import os
 import sys
 import glob
 import time
+import re
+
+from WorkerId_ import *
+from util import *
+from Task_ import *
+
 
 workers_fol = "workers"
 
@@ -29,9 +35,10 @@ def worker_loop(worker_id):
             if (re.match("Inputs[0-9]+", file) != None):
                 worker_run_job(worker_id, file)
 
+
         cmd("echo a >> %s"%os.path.join(my_fol, "IWaiting"))
 
-        time.sleep(60)
+        time.sleep(10)
 
 
 
@@ -55,10 +62,13 @@ def worker_run_job(worker_id, file):
 
     my_fol = worker_id.get_my_fol()
 
+    input_file = os.path.join(my_fol, file)
 
-    f = open(file)
+    f = open(input_file)
     lines = f.readlines()
     f.close()
+
+    mark_done(input_file)
 
     executable = lines[0].strip()
 
@@ -69,12 +79,21 @@ def worker_run_job(worker_id, file):
             continue
         inputs.append(line)
 
-    iaccept = os.path.join(my_fol, "IAccept%08i")
-    icompleted = os.path.join(my_fol, "ICompleted%08i"%taskno)
+    iaccept = os.path.join(my_fol, "IAccept%08i"%taskno)
+    icompleted = os.path.join(my_fol, "ICompleted%08i.list"%taskno)
     log_file = os.path.join(my_fol, "log%08i.log"%taskno)
 
+    print "Running job %08i"%taskno
+
+    the_command = "%s %s %s > %s 2>&1"%(executable, icompleted, " ".join(inputs), log_file)
+    print the_command
+
     cmd("echo a > %s"%iaccept)
-    cmd("%s %s %s > %s 2>&1"%(executable, icompleted, " ".join(inputs), log_file))
+    cmd(the_command)
+
+    if (os.path.exists(os.path.join(my_fol, "IDead"))):
+        print "Got killed while running a job!!!!!! WTF!!!!! %08i"%taskno
+
 
 
 
@@ -88,8 +107,8 @@ def worker_split_handler(worker_id):
 
     print "Splitting into individual threads"
 
-    print cmd("cat %s | parallel '%s %s %i {}'"%(isplit, worker_executable,
-        worker_id.allocation_id, 1))
+    print cmd("cat %s | parallel '%s %s %i {} > _{}.log'"%(isplit, worker_executable,
+        worker_id.allocation_id, worker_id.allocation_cpus))
 
 
 
@@ -112,14 +131,17 @@ def worker_merge_handler(worker_id):
 
 
 if __name__ == "__main__":
-    allocation_id = int(sys.argv[1])
+    allocation_id = sys.argv[1]
     threads = int(sys.argv[2])
+    extras = ""
+    if (len(sys.argv) > 3):
+        extras = sys.argv[3]
     
     new_worker = True
     while (new_worker):
         new_worker = False
 
-        my_id = WorkerId(allocation_id, threads)
+        my_id = WorkerId(allocation_id, threads, extras)
         new_worker_setup(my_id)
 
         try:

@@ -4,6 +4,8 @@ import json
 import os
 import sys
 
+from util import *
+
 workers_fol = "workers"
 
 class WorkerId:
@@ -34,6 +36,7 @@ class WorkerId:
         self.my_cpus = js["my_cpus"]
 
     def to_string(self):
+        print self.allocation_cpus, "!!@!$@#$@#$@"
         dictt = {
             "allocation_id":self.allocation_id,
             "allocation_cpus":self.allocation_cpus,
@@ -52,7 +55,10 @@ class WorkerId:
     def make_my_fol(self):
         fol = self.get_my_fol()
         if (not os.path.exists(fol)):
-            os.mkdir(fol)
+            try:
+                os.mkdir(fol)
+            except:
+                pass
             info = os.path.join(fol, "info")
             f = open_atomic(info)
             f.write(self.to_string())
@@ -60,6 +66,10 @@ class WorkerId:
         else:
             print "My folder already exists!! " + fol
 
+def worker_id_from_string(string):
+    wid = WorkerId("", 0)
+    wid.from_string(string)
+    return wid
 
 
 def kill_worker(worker_id):
@@ -80,7 +90,7 @@ def split_worker(worker_id):
     for i in range(worker_id.allocation_cpus):
         extra = "_%02i"%i
         f.write(extra + "\n")
-        new_id = WorkerId(worker_id.allocation_id, 1, extra)
+        new_id = WorkerId(worker_id.allocation_id, worker_id.allocation_cpus, extra)
         new_id.make_my_fol()
         new_ids.append(new_id)
     close_atomic(f, isplit)
