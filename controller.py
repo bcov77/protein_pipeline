@@ -4,12 +4,12 @@ import os
 import sys
 import glob
 
-import scheduler
-import Pipeline
-import Task
-import util
-import worker
-import WorkerId
+from scheduler import *
+from Pipeline_ import *
+from Task_ import *
+from util import *
+from worker import *
+from WorkerId_ import *
 
 const_data_fol = "const_data"
 workers_fol = "workers"
@@ -24,7 +24,7 @@ def controller_loop():
     pipeline_file = glob.glob(os.path.join(const_data_fol, "*.pipeline"))
     assert(len(pipeline_file) == 1)
 
-    pipeline = Pipeline(pipeline_file).operations
+    pipeline = Pipeline(pipeline_file[0]).operations
 
     if (not os.path.exists(workers_fol)):
         os.mkdir(workers_fol)
@@ -76,9 +76,9 @@ def controller_loop():
         write_task_list(pipeline, current_tasks)
         current_tasks = parse_task_list(pipeline)
 
-        running_tasknos, new_single_tasknos = schedule_tasks_to_workers(operations, current_tasks)
+        running_tasknos, new_single_tasknos = schedule_tasks_to_workers(pipeline, current_tasks)
 
-        known_completed_tasks, known_input_files = parse_completed_list(operations, tasks)
+        known_completed_tasks, known_input_files = parse_completed_list(pipeline, current_tasks)
 
         print "Total tasks: %i"%len(current_tasks)
         print "Prev running tasks: %i"%(len(running_tasknos))
@@ -125,10 +125,10 @@ def get_inputs_for_tasks(operations, tasks):
 
 
 
-def process_completed(operations, tasks):
+def determine_inputs(operations, tasks):
 
     input_lists = []
-    for i in range(len(input_lists)):
+    for i in range(len(operations)):
         input_lists.append([])
     input_lists.append([])
 
@@ -138,6 +138,8 @@ def process_completed(operations, tasks):
         operationno = completed_task.operation.idno
         for inputt in completed_task.outputs:
             input_lists[operationno+1].append(inputt)
+
+    return input_lists
 
 
 
@@ -167,7 +169,7 @@ def process_completed(operations, tasks):
             print "Initial input detected as new but not new %i"%task.idno
         complete_dict[task.idno] = task
 
-    for task in new_complete_tasks:
+    for task in new_completed_tasks:
         if (task.idno in complete_dict):
             print "Detected as new but not new %i"%task.idno
         complete_dict[task.idno] = task
@@ -204,7 +206,7 @@ def write_complete_list(complete_dict, input_files):
         task = complete_dict[key]
         f.write("%08i %s"%(task.idno, "`".join(task.output)))
 
-    close_atomic(f, complete_list)
+    close_atomic(f, completed_list)
 
 
 def parse_completed_list(operations, tasks):
@@ -271,7 +273,7 @@ def parse_initial_inputs(operations, tasks):
     idno = lowest_task_idno
     for file in files:
         idno -= 1
-        completed_tasks.append(file, idno)
+        completed_tasks.append(parse_input_list(file, idno))
         input_files.append(file)
 
     return completed_tasks, input_files
@@ -336,7 +338,7 @@ def parse_task_list(operations):
         operation = operations[operation_no]
         tasks.append(Task(operation, inputs, line_count))
 
-    return tasks, initial_inputs
+    return tasks
 
 
 

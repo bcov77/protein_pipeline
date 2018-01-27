@@ -28,39 +28,39 @@ class Operation:
 
 
     def __init__(self, lines, ordinal):
-        parse_lines(lines, ordinal)
-        sanity_check()
+        self.parse_lines(lines, ordinal)
+        self.sanity_check()
 
-    def parse_lines(lines, ordinal):
+    def parse_lines(self, lines, ordinal):
         header = lines[0].strip().replace(":", "").replace(" ", "_")
-        name = "%03i_%s"%(ordinal, header)
-        idno = ordinal
+        self.name = "%03i_%s"%(ordinal, header)
+        self.idno = ordinal
 
         for line in lines[1:]:
-            line = lines.strip()
+            line = line.strip()
             sp = line.split(":")
 
-            key = sp.lower()
-            arg = sp[1]
+            key = sp[0].lower()
+            arg = sp[1].strip()
 
             if (key == "batchsize"):
-                batch_size = int(arg)
+                self.batch_size = int(arg)
             if (key == "executable"):
-                executable = arg
+                self.executable = arg
             if (key == "cpurequest"):
-                cpu_size = int(arg)
+                self.cpu_size = int(arg)
             if (key == "maxminutes"):
-                max_minutes = int(arg)
+                self.max_minutes = int(arg)
 
 
 
-    def sanity_check():
-        if (initial_operation):
+    def sanity_check(self):
+        if (self.initial_operation):
             return
-        assert(batch_size > 0)
-        assert(os.path.exists(executable))
-        assert(cpu_size > 0)
-        assert(max_minutes > 0)
+        assert(self.batch_size > 0)
+        assert(os.path.exists(self.executable))
+        assert(self.cpu_size > 0)
+        assert(self.max_minutes > 0)
 
 
 class Pipeline:
@@ -68,9 +68,9 @@ class Pipeline:
     operations = []
 
     def __init__(self, filename):
-        parse_file(filename)
+        self.parse_file(filename)
 
-    def parse_file(filename):
+    def parse_file(self, filename):
         f = open(filename)
         lines = f.readlines()
         f.close()
@@ -84,7 +84,14 @@ class Pipeline:
                 continue
             if (line[0] != " " and line[0] != "\t"):
                 if (len(operation_lines) > 0):
-                    operations.append(Operation(operation_lines), len(operations))
+                    self.operations.append(Operation(operation_lines, len(self.operations)))
                 operation_lines = []
 
             operation_lines.append(line)
+
+
+
+
+
+
+

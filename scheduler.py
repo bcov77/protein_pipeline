@@ -5,6 +5,8 @@ import sys
 import glob
 from collections import defaultdict
 
+from controller import *
+
 
 dead_extra_mins = 10
 
@@ -20,7 +22,7 @@ def schedule_tasks_to_workers(operations, tasks):
 
     ready_workers, running_tasknos = find_ready_workers_and_running_tasks(operations, tasks)
 
-    to_run = order_waiting_tasks_by_priority(tasks, running_tasknos)
+    to_run = order_waiting_tasks_by_priority(operations, tasks, running_tasknos)
 
     single_cpus = []
     grouped_singles = []    # these are whole nodes sitting idle that have been split
@@ -59,7 +61,7 @@ def schedule_tasks_to_workers(operations, tasks):
     for allocation_id in grouped:
         total_cpus += len(grouped[allocation_id])
 
-    print "Total cpus: "%total_cpus
+    print "Total cpus: %i"%total_cpus
 
 
     return running_tasknos, new_running_tasknos
@@ -117,7 +119,7 @@ def try_to_schedule(to_run, single_cpus, grouped_singles, multi_cpus):
     if (to_run_next == len(to_run)):
         for multi_cpu in multi_cpus[multi_cpu_next:]:
             kill_worker(multi_cpu)
-        for grouped_single in grouped_singles[grouped_single_next]:
+        for grouped_single in grouped_singles[grouped_single_next:]:
             for ind in grouped_single:
                 kill_worker(ind)
 
@@ -127,7 +129,7 @@ def try_to_schedule(to_run, single_cpus, grouped_singles, multi_cpus):
 
 
 # higher command.idno gets priority to make the pipeline flow
-def order_waiting_tasks_by_priority(tasks, running_tasknos):
+def order_waiting_tasks_by_priority(operations, tasks, running_tasknos):
 
     known_completed_tasks, known_input_files = parse_completed_list(operations, tasks)
 
