@@ -21,6 +21,7 @@ working_inputs_fol = "working_inputs"
 
 
 def controller_loop():
+    print "Controller Start"
     pipeline_file = glob.glob(os.path.join(const_data_fol, "*.pipeline"))
     assert(len(pipeline_file) == 1)
 
@@ -35,6 +36,14 @@ def controller_loop():
         cmd("touch %s"%completed_list)
 
     while (True):
+        
+        if (os.path.exists("controller.pause")):
+            print "controller paused"
+            mark_done("controller.pause")
+            time.sleep(15)
+            while (os.path.exists("controller.pause.done")):
+                time.sleep(15)
+            sys.exit(0)
 
         current_tasks = parse_task_list(pipeline)
 
@@ -101,7 +110,7 @@ def create_new_tasks_if_possible(operations, tasks, inputs_lists):
 
         batch_size = operations[i].batch_size
 
-        while (len(inputs) >= batch_size or (pipeline_empty and len(inputs) > 0)):
+        while (len(inputs) >= batch_size):# or (pipeline_empty and len(inputs) > 0)):
             upper = min(batch_size, len(inputs))
             these_inputs = inputs[:upper]
             inputs = inputs[upper:]
@@ -142,7 +151,8 @@ def determine_inputs(operations, tasks):
     for completed_task in completed_tasks:
         operationno = completed_task.operation.idno
         for inputt in completed_task.outputs:
-            input_lists[operationno+1].append(inputt)
+            if (inputt[0] != "-"):
+                input_lists[operationno+1].append(inputt)
 
     return input_lists
 
@@ -189,6 +199,7 @@ def process_completed(operations, tasks):
         if (not os.path.exists(file)):
             print "Input/output doesnt exist %s"%file
             continue
+        print "Marking %s done"%file
         mark_done(file)
 
 

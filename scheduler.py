@@ -8,7 +8,7 @@ from collections import defaultdict
 from controller import *
 
 
-dead_extra_mins = 1
+dead_extra_mins = 8
 
 
 #order tasks from furthest in pipeline to least
@@ -54,6 +54,17 @@ def schedule_tasks_to_workers(operations, tasks):
         if (single_cpu.allocation_id in delete_single_ids):
             continue
         single_cpus.append(single_cpu)
+
+    # a = [ len(grouped[x.allocation_id]) for x in single_cpus ]
+    # b = range(len(a))
+    # c = sorted(b, key=lambda x : a[x])
+    # if ( len(c) == 2 ):
+    #     if (single_cpus[0].allocation_id < single_cpus[1].allocation_id):
+    #         c[0] = b[0]
+    #         c[1] = b[1]
+    #     else:
+    #         c[1] = b[0]
+    #         c[0] = b[1]
 
     single_cpus = sorted(single_cpus, key=lambda x: len(grouped[x.allocation_id]))
 
@@ -120,12 +131,12 @@ def try_to_schedule(to_run, single_cpus, grouped_singles, multi_cpus):
     print "Idle full nodes: %s"%(
         len(grouped_singles) + len(multi_cpus) - grouped_single_next - multi_cpu_next)
 
-    if (to_run_next == len(to_run)):
-        for multi_cpu in multi_cpus[multi_cpu_next:]:
-            kill_worker(multi_cpu)
-        for grouped_single in grouped_singles[grouped_single_next:]:
-            for ind in grouped_single:
-                kill_worker(ind)
+    # if (to_run_next == len(to_run)):
+    #     for multi_cpu in multi_cpus[multi_cpu_next:]:
+    #         kill_worker(multi_cpu)
+    #     for grouped_single in grouped_singles[grouped_single_next:]:
+    #         for ind in grouped_single:
+    #             kill_worker(ind)
 
     return new_running_tasknos
             
@@ -200,6 +211,18 @@ def determine_is_alive(operations, tasks, fol):
         if (file == "IDead"):
             return False, -1, False
 
+
+    #this fixes the race condition, can't be ready a few seconds after receiving job
+    for file in files:
+        if (re.match("Inputs[0-9]+$", file) != None):
+            age_sec = age_of_file_seconds(os.path.join(fol, file))
+            taskno = int(re.match("Inputs([0-9]+)$", file).group(1))
+
+            if (age_sec < 30):
+                return True, taskno, False
+
+            break
+
     #next look for waiting
     for file in files:
         if (file == "IWaiting"):
@@ -208,8 +231,6 @@ def determine_is_alive(operations, tasks, fol):
                 return True, -1, True
             break
 
-    #next look for running
-    for file in files:
         if (re.match("IAccept[0-9]+$", file) != None):
             age = age_of_file_minutes(os.path.join(fol, file))
             taskno = int(re.match("IAccept([0-9]+)$", file).group(1))
@@ -219,6 +240,9 @@ def determine_is_alive(operations, tasks, fol):
                 return True, taskno, False
             break
 
+
+
+
     #next look for recent input assignment
     for file in files:
         if (re.match("Inputs[0-9]+$", file) != None):
@@ -227,6 +251,14 @@ def determine_is_alive(operations, tasks, fol):
 
             if (age < dead_extra_mins):
                 return True, taskno, False
+            break
+
+    for file in files:
+        if (file == "info"):
+            age = age_of_file_minutes(os.path.join(fol, file))
+
+            if (age < dead_extra_mins):
+                return True, -1, False
             break
 
     print "Worker seems dead: %s: %s"%(fol, " ".join(files))

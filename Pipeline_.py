@@ -40,7 +40,7 @@ class Operation:
             sp = line.split(":")
 
             key = sp[0].lower()
-            arg = sp[1].strip()
+            arg = " ".join(sp[1:]).strip()
 
             if (key == "batchsize"):
                 self.batch_size = int(arg)
@@ -57,7 +57,7 @@ class Operation:
         if (self.initial_operation):
             return
         assert(self.batch_size > 0)
-        assert(os.path.exists(self.executable))
+        assert(os.path.exists(self.executable.split()[0]))
         assert(self.cpu_size > 0)
         assert(self.max_minutes > 0)
 
@@ -74,11 +74,10 @@ class Pipeline:
         lines = f.readlines()
         f.close()
 
-        for line in lines:
-            line = re.sub("#.*", "", line)
 
         operation_lines = []
         for line in lines + ["asdf"]:
+            line = re.sub("#.*", "", line)
             if (len(line.strip()) == 0):
                 continue
             if (line[0] != " " and line[0] != "\t"):

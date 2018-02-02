@@ -36,9 +36,13 @@ def worker_loop(worker_id):
                 worker_run_job(worker_id, file)
 
 
+        # although there are no inputs yet, inputs may have been
+        #  written to the file system already. This is handled in
+        #  scheduler.py
+
         cmd("echo a >> %s"%os.path.join(my_fol, "IWaiting"))
 
-        time.sleep(10)
+        time.sleep(15)
 
 
 
@@ -95,6 +99,7 @@ def worker_run_job(worker_id, file):
     cmd("echo a > %s"%iaccept)
     cmd(the_command)
 
+    print "Done"
     if (os.path.exists(os.path.join(my_fol, "IDead"))):
         print "Got killed while running a job!!!!!! WTF!!!!! %08i"%taskno
 
