@@ -25,7 +25,6 @@ def check_failed_atomic(filename):
 
 def mark_done(filename):
     filename = filename.strip()
-    print "||%s||"%filename
     os.rename(filename, filename + ".done")
 
 def cmd(command, wait=True):

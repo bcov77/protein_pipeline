@@ -21,6 +21,7 @@ working_inputs_fol = "working_inputs"
 
 
 def controller_loop():
+    cmd("echo a > last_schedule")
     print "Controller Start"
     pipeline_file = glob.glob(os.path.join(const_data_fol, "*.pipeline"))
     assert(len(pipeline_file) == 1)
@@ -43,6 +44,13 @@ def controller_loop():
             time.sleep(15)
             while (os.path.exists("controller.pause.done")):
                 time.sleep(15)
+            sys.exit(0)
+
+
+        if (age_of_file_minutes("last_schedule") > 60):
+            print "Looks like we're done. Killing everyone"
+            kill_all_workers()
+            cmd("echo a > all_done")
             sys.exit(0)
 
         current_tasks = parse_task_list(pipeline)
@@ -384,6 +392,8 @@ def try_become_controller(id):
 
 
 if __name__ == "__main__":
+    if (os.path.exists("all_done")):
+        sys.exit(0)
     allocation_id = sys.argv[1]
     threads = int(sys.argv[2])
     my_id = WorkerId(allocation_id, threads)

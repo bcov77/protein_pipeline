@@ -172,6 +172,16 @@ def order_waiting_tasks_by_priority(operations, tasks, running_tasknos):
     return to_run
 
 
+def kill_all_workers(operations, tasks):
+    worker_fols = glob.glob(os.path.join(workers_fol, "*/"))
+
+
+    for fol in worker_fols:
+        dead = os.path.join(fol, "IDead")
+        if (not os.path.exists(dead)):
+            cmd("echo a > %s"%dead)
+
+
 
 def find_ready_workers_and_running_tasks(operations, tasks):
     worker_fols = glob.glob(os.path.join(workers_fol, "*/"))
@@ -280,6 +290,8 @@ def schedule(task, worker_id):
     for inputt in task.inputs:
         f.write("%s\n"%inputt)
     close_atomic(f, input_name)
+
+    cmd("echo a > last_schedule")
 
 
 

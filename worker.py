@@ -26,6 +26,17 @@ def worker_loop(worker_id):
 
     while (True):
 
+        if (os.path.exists("../../all_done")):
+            print "Looks like all done"
+            cmd("echo a > IDead")
+            sys.exit(0)
+
+        if (age_of_file_minutes("../../last_schedule") > 60):
+            print "Looks like controller died"
+            cmd("echo a > IDead")
+            sys.exit(0)
+
+
         files = list_files_new_to_old(my_fol)
 
         if ("IDead" in files):
