@@ -26,14 +26,14 @@ def worker_loop(worker_id):
 
     while (True):
 
-        if (os.path.exists("../../all_done")):
+        if (os.path.exists("all_done")):
             print "Looks like all done"
-            cmd("echo a > IDead")
+            cmd("echo a > %s"%os.path.join(my_fol, "IDead"))
             sys.exit(0)
 
-        if (age_of_file_minutes("../../last_schedule") > 60):
+        if (age_of_file_minutes("last_schedule") > 60):
             print "Looks like controller died"
-            cmd("echo a > IDead")
+            cmd("echo a > %s"%os.path.join(my_fol, "IDead"))
             sys.exit(0)
 
 
