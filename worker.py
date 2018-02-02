@@ -114,7 +114,8 @@ def worker_run_job(worker_id, file):
     if (os.path.exists(os.path.join(my_fol, "IDead"))):
         print "Got killed while running a job!!!!!! WTF!!!!! %08i"%taskno
 
-
+    #ensure controller knows we're done before we ask for another
+    time.sleep(30)
 
 
 def worker_split_handler(worker_id):
