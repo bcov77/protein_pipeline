@@ -36,6 +36,7 @@ def controller_loop():
     if (not os.path.exists(completed_list)):
         cmd("touch %s"%completed_list)
 
+
     while (True):
         
         if (os.path.exists("controller.pause")):
@@ -52,6 +53,10 @@ def controller_loop():
             kill_all_workers()
             cmd("echo a > all_done")
             sys.exit(0)
+
+        if (age_of_file_minutes("last_schedule") > 30):
+            for item in pipeline:
+                item.batch_size = 1
 
         current_tasks = parse_task_list(pipeline)
 
